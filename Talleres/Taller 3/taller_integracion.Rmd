@@ -1,0 +1,217 @@
+---
+title: "Taller AN - Integración"
+output:
+  html_notebook: default
+  taller_integracion: default
+---
+
+## Ejercicio 7.4
+La "función error" se define como $Erf(x) = \frac{2}{\sqrt{x}}\int_{0}^{x}{sin(t^2)dt}$. Aproximar $Erf(1.5)$ usando los cuatro métodos de integración hasta que la diferencia en cada resultado sea $\leq 0.5*10^{-5}$ .
+
+#### Datos de Entrada
+
+```{r}
+f <- expression(exp(-x^2))
+k <- 2/sqrt(pi)
+a <- 0
+b <- 1.5
+tol <- 0.5e-5
+```
+
+#### Solución
+
+##### Funciones auxiliares
+
+Se definen las siguientes funciones auxiliares, para ser usadas en las soluciones planteadas
+
+```{r}
+# Permite derivar una función hasta su n-ésima derivada
+derivar <- function(f, n) {
+	d <- f
+	for (i in 1:n) {
+		d <- D(d, "x")
+	}
+	
+	return(f)
+}
+
+# Permite castear de expression a function
+castearFuncion <- function(f) {
+	Fx <- function(x) { eval(f[[1]]) }
+	return (Fx)
+}
+```
+
+Las siguientes, son cada una de las funciones definidas para resolver el problema
+
+##### 1. Regla del Trapecio
+
+```{r}
+trapecios <- function(f, a, b, n, tol) {
+	h <- (b - a) / n
+	s <- 0
+	e <- -(h ^ 3) / 12
+	d <- castearFuncion(derivar(f, 1))
+	Fx <- castearFuncion(f)
+	
+	for (i in (1:(n-1))) {
+	    error <- e * d(s)
+	    if (error < tol) {
+	    	s <- s + Fx(a + (i*h))
+	    }
+	}
+  
+	valor <- (Fx(a) + Fx(b) + 2*s) * (h/2)
+	return (valor)
+}
+```
+
+##### 2. Regla de Simpson
+
+```{r}
+simpson <- function(f, a, b, n, tol) {
+	h <- (b - a) / n
+	suma_pares <- 0
+	suma_impares <- 0
+	Fx <- castearFuncion(f)
+	
+	for (i in 1:(n-1)) {
+		if (i %% 2 == 0) {
+			suma_pares <- suma_pares + Fx(a + i * h)
+		} else {
+			suma_impares <- suma_impares + Fx(a + i * h)
+		}
+	}
+	
+	valor <- h/3 * (Fx(a) + Fx(b) + 4*suma_impares + 2*suma_pares)
+	return (valor)
+}
+```
+
+##### 3. Regla de Simpson 3/8
+
+```{r}
+simpsonTresOctavos <- function(f, a, b, tol) {
+	Fx <- castearFuncion(f)
+	
+	valor <- ((b - a)/8) * (Fx(a) + 3*Fx(((2*a)+b)/3) + 3*Fx((a+(2*b))/3) + Fx(b))
+	return (valor)
+}
+```
+
+##### 4. Cuadratura Gaussiana
+
+```{r}
+library("gaussquad")
+
+cuadratura <- function(f, a, b, tol) {
+	Fx <- castearFuncion(f)
+	
+	lqr <- legendre.quadrature.rules(10)[[10]]
+	valor <- legendre.quadrature(Fx, lqr, lower = a, upper = b)
+	return (valor)
+}
+```
+
+##### Resultados Obtenidos
+
+A continuación se presentan los resultados obtenidos con los cuatro métodos
+
+```{r}
+valor1 <- trapecios(f, a, b, 10000, tol) * k
+print(valor1, digits=20)
+
+valor2 <- simpson(f, a, b, 10000, tol) * k
+print(valor2, digits=20)
+
+valor3 <- simpsonTresOctavos(f, a, b, tol) * k
+print(valor3, digits=20)
+
+valor4 <- cuadratura(f, a, b, tol) * k
+print(valor4, digits=20)
+```
+
+## Ejercicio 7.5
+
+De una función $f$, conocemos ciertos apuntos. Aproximar $\int_{0}^{0.8}{f(x)dx)}$ mediante la regla del Trapecio, regla de Simpson y Romberg (polinomios grado 2)
+
+#### Datos de Entrada
+
+```{r}
+x <- c(0, 0.2, 0.4, 0.6, 0.8)
+y <- c(3.592, 3.110, 3.017, 2.865, 2.658)
+
+a <- 0
+b <- 0.8
+```
+
+#### Solución
+
+Las siguientes, son cada una de las funciones definidas para resolver el problema
+
+##### 1. Regla del Trapecio
+
+```{r}
+trapecios <- function(f, a, b, n, tol) {
+	h <- (b - a) / n
+	s <- 0
+	e <- -(h ^ 3) / 12
+	
+	for (i in (1:(n-1))) {
+	    s <- s + f(a + (i*h))
+	}
+  
+	valor <- (f(a) + f(b) + 2*s) * (h/2)
+	return (valor)
+}
+```
+
+##### 2. Regla de Simpson
+
+```{r}
+simpson <- function(f, a, b, n, tol) {
+	h <- (b - a) / n
+	suma_pares <- 0
+	suma_impares <- 0
+	
+	for (i in 1:(n-1)) {
+		if (i %% 2 == 0) {
+			suma_pares <- suma_pares + f(a + i * h)
+		} else {
+			suma_impares <- suma_impares + f(a + i * h)
+		}
+	}
+	
+	valor <- h/3 * (f(a) + f(b) + 4*suma_impares + 2*suma_pares)
+	return (valor)
+}
+```
+
+##### 3. Romberg
+
+```{r}
+library(pracma)
+library(polynom)
+
+rombergFuncion <- function(f, a, b, n) {
+	return (romberg(funcPol, a, b, n)[[1]])
+}
+```
+
+##### Resultados Obtenidos
+
+A continuación se presentan los resultados obtenidos con los cuatro métodos
+
+```{r}
+pol <- poly.calc(x, y)
+funcPol <- as.function(pol)
+
+valor1 <- trapecios(funcPol, a, b, 10000)
+print(valor1, digits=20)
+
+valor2 <- simpson(funcPol, a, b, 10000)
+print(valor2, digits=20)
+
+valor3 <- rombergFuncion(f, a, b, 10000)
+print(valor3, digits=20)
+```
