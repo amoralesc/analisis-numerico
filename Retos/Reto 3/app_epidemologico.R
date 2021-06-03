@@ -165,8 +165,6 @@ obtenerDatosPaisSIR <- function(pais, fecha) {
 	return (c(S = S, I = I, R = R, beta = beta, gamma = gamma))
 }
 
-obtenerDatosPaisSIR(colombia, fecha)
-
 ################################################################################
 
 ################################################################################
