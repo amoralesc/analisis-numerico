@@ -263,7 +263,7 @@ server <- function(input, output, session) {
 	observeEvent(input$pais, {
 		rango_fechas <- rangoFechasPais(datosPais())
 		updateDateInput(session, "fecha_inicio", min = rango_fechas[1] + 30,
-						max = rango_fechas[2], value = rango_fechas[1] + 30)
+						max = rango_fechas[2], value = rango_fechas[1] + 60)
 	})
 	
 	observeEvent(input$simular, {
